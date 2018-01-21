@@ -131,12 +131,12 @@ def psetup():
         import cipherutils as cutils
         pf.write(cutils.encode_with_password(PASSWORD_CORPUS, MASTER_PASS))
 
-def ptdowm():
+def ptdown():
     global PASSWORD_FILE, MASTER_PASS
     remove_files([PASSWORD_FILE])
     MASTER_PASS = None
 
-@with_setup(psetup, psetup)
+@with_setup(psetup, ptdown)
 def test_password_cipher():
     global PASSWORD_FILE, MASTER_PASS, USER1, USER2, PASS1, PASS2
     password = MASTER_PASS
