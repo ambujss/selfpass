@@ -1,4 +1,5 @@
 import cipherutils as cutils
+import json
 
 MIN_PASS_LEN = 10
 
@@ -85,3 +86,43 @@ class FileCipher(object):
         self.check_commit_params()
         with open(self.dst, "w") as dfile:
             dfile.write(self.dsttext)
+
+class PasswordCipher(FileCipher):
+    """
+    A FileCipher for managing passwords.
+    """
+
+    def __init__(self, password_file=None, password=None, **kwargs):
+        super(PasswordCipher, self).__init__(**kwargs)
+        if password:
+            self.set_password(password)
+        if password_file:
+            self.set_src(password_file)
+        self.corpus = None
+
+    def ensure_decoded(f):
+        def func(self, *args, **kwargs):
+            if not self.is_processed():
+                self.set_mode_to_decode()
+                self.process()
+                self.corpus = json.loads(self.plaintext)
+            return f(self, *args, **kwargs)
+        return func
+
+    @ensure_decoded
+    def contexts(self):
+        return self.corpus.keys()
+
+    @ensure_decoded
+    def get_credentials(self, context):
+        return self.corpus.get(context)
+
+    @ensure_decoded
+    def get_password(self, context, username):
+        creds = self.get_credentials(context)
+        if creds is None:
+            return None
+        secret = creds.get(username)
+        if secret is None:
+            return None
+        return secret.get("password")
